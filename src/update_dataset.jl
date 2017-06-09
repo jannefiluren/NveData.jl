@@ -8,7 +8,7 @@ function update_dataset(stat_list, save_folder)
 
     # Path to runoff data
 
-    path_runoff = "//hdata/fou/Avrenningskart/Data/runoff_all/"
+    path_runoff = "/home/jmg/flood_forecasting/runoff_observed"
     
     # Read metadata from excel sheet
 
@@ -50,6 +50,15 @@ function update_dataset(stat_list, save_folder)
     time_last = find_last_senorge("V2.0")
 
     time_vec = time_first:time_last
+
+
+
+    @show time_first
+
+
+    @show time_last
+    
+
 
     # Read new meteorological data
 

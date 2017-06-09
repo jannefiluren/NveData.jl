@@ -261,6 +261,8 @@ function read_senorge_data(time_vec, met_var, elev_ind; senorge = "V2.0", scale_
             file_name = joinpath(path_met, "$met_var", "$date_str1", "$(met_var)_$date_str2.bil")    
 
         end
+
+        print("Processing data for $date_str2 \n")
         
         try
             
@@ -385,7 +387,7 @@ function metadata_elevbands(stat_list, save_folder, elev_ind, stat_dbk)
 
     for i in eachindex(raster_names)
 
-        file_name = "raw/$(raster_names[i]).asc"
+        file_name = joinpath(Pkg.dir("NveData"), "raw/$(raster_names[i]).asc")
 
         data_raster = read_esri_raster(file_name)
 
@@ -458,7 +460,7 @@ function process_runoff_data(stat_list, time_vec, df_meta, path_runoff, save_fol
         istat = find(stat_all .== stat_name)
         istat = istat[1]
 
-        file_name = "$(regine_area[istat]).$(main_no[istat]).$(point_no[istat]).$(param_key[istat]).$(version_no_end[istat])."
+        file_name = "$(regine_area[istat]).$(main_no[istat]).$(point_no[istat]).$(param_key[istat]).$(version_no_end[istat])"
 
         data = readdlm(joinpath(path_runoff, file_name), skipstart = 2) 
 
@@ -506,11 +508,11 @@ end
 
 
 """
-     read_old_data(stat_list, save_folder, met_var; crop = 5)
+     read_old_data(stat_list, save_folder, met_var; crop = 10)
     
 Read existing data.
 """
-function read_old_data(stat_list, save_folder, met_var; crop = 5)
+function read_old_data(stat_list, save_folder, met_var; crop = 10)
 
     data = OrderedDict()
     
@@ -525,8 +527,8 @@ function read_old_data(stat_list, save_folder, met_var; crop = 5)
         tmp  = CSV.read(file_path, delim = ";", header = false,
                         dateformat="yyyy-mm-dd HH:MM", nullable = false, types = vcat(DateTime, repmat([Float64], nsep)))
 
-        time = Array(tmp[1:crop, 1])
-        tmp  = Array(tmp[1:crop, 2:end])
+        time = Array(tmp[1:end-crop, 1])
+        tmp  = Array(tmp[1:end-crop, 2:end])
 
         data[stat_name] = tmp
 

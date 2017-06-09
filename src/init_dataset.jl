@@ -8,7 +8,7 @@ function init_dataset(stat_list, time_vec, save_folder)
 
     # Path to runoff data
 
-    path_runoff = "//hdata/fou/Avrenningskart/Data/runoff_all/"
+    path_runoff = "/home/jmg/flood_forecasting/runoff_observed"
 
     # Read metadata from excel sheet
 
