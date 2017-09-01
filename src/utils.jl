@@ -29,7 +29,7 @@ function read_dbk_ind()
 
     for line in lines
         str_splitted = split(line)
-        dbk_ind[str_splitted[2]] = map(x->parse(Int64,x), str_splitted[3:end])
+        dbk_ind[str_splitted[2]] = map(x -> parse(Int64,x) + 1, str_splitted[3:end])
     end
 
     return dbk_ind
