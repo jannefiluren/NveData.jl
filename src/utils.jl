@@ -105,7 +105,7 @@ function link_dbk_elev(dbk_ind, dem_vec)
 
     for (dbk, ind) in dbk_ind
 
-        if any(isnan(dem_vec[ind]))
+        if any(isnan.(dem_vec[ind]))
             delete!(dbk_ind, dbk)
         else
             dbk_elev[dbk] = dem_vec[ind]
@@ -397,7 +397,7 @@ function metadata_elevbands(stat_list, save_folder, elev_ind, stat_dbk)
 
         for (dbk, values) in data_out
 
-            res_dict[dbk][parse(raster_names[i])] = squeeze(values, 1)
+            res_dict[dbk][parse(raster_names[i])] = values[:, 1]
 
         end
 
