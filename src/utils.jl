@@ -1,5 +1,60 @@
 
 """
+Get coordinate information about senorge grids.
+"""
+function senorge_info()
+
+    nrows, ncols = 1550, 1195
+
+    xllcorner, yllcorner = -75000, 6450000
+
+    senorge_ind = reshape(collect(1:nrows*ncols), ncols, nrows)'
+
+    xvec = collect(xllcorner:1000:(xllcorner+(ncols-1)*1000))'
+
+    xcoord = repmat(xvec, nrows, 1)
+
+    yvec = collect(yllcorner+(nrows-1)*1000:-1000:yllcorner)
+
+    ycoord = repmat(yvec, 1, ncols)
+
+    return senorge_ind, xcoord, ycoord
+
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""
     read_metadata()
 
 Read metadata stored in excel sheet (Serier til Avrenningskart 2016.xlsx).

@@ -18,6 +18,7 @@ export read_metadata
 
 export read_senorge_data
 export aggregate_elevations, aggregate_elevations!
+export senorge_info
 
 export write_met_data
 export write_update
