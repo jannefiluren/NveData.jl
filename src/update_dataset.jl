@@ -1,48 +1,34 @@
 
 """
-    update_dataset(stat_list, save_folder)
+    update_dataset(stat_list, save_folder; path_runoff)
 
 Update an existing initial dataset.
 """
-function update_dataset(stat_list, save_folder)
+function update_dataset(stat_list, save_folder;
+    path_runoff = "/home/jmg/flood_forecasting/runoff_observed")
 
-    # Path to runoff data
-
-    path_runoff = "/home/jmg/flood_forecasting/runoff_observed"
-    
     # Read metadata from excel sheet
 
     df_meta = read_metadata()
 
-    # Link drainage basin key with watershed indices
+    df_meta = subset_metadata(df_meta, stat_list)
+
+    # Dictonary that links drainage basin keys to senorge indices
 
     dbk_ind = read_dbk_ind()
 
-    # Read digital elevation model
+    dbk_ind = subset_dbk_ind(dbk_ind, df_meta)
 
-    file_name = joinpath(Pkg.dir("NveData"), "raw/elevation.asc")
+    # Dictonary that links drainage basin keys to dataframes with
+    # geographic information (landuse, elevation...)
 
-    dem_raster = read_esri_raster(file_name)
-
-    dem_vec = raster2vec(dem_raster)
-
-    # Link drainage basin key with elevations
-
-    dbk_elev, dbk_ind = link_dbk_elev(dbk_ind, dem_vec)
-
-    # For each catchment, link indicies of grid cells to individual elevation bands
-
-    elev_ind = link_elev_ind(dbk_ind, dbk_elev)
-
-    # Link station name and drainage basin key
-
-    stat_dbk = link_stat_dbk(df_meta)
+    df_geo = watershed_info(dbk_ind)
 
     # Read existing data
 
-    tair_old, time_old = read_old_data(stat_list, save_folder, "Tair")
+    tair_old, time_old = read_old_data(save_folder, "tair")
 
-    prec_old, time_old = read_old_data(stat_list, save_folder, "Prec")
+    prec_old, time_old = read_old_data(save_folder, "prec")
 
     # Find last available senorge data
 
@@ -51,30 +37,21 @@ function update_dataset(stat_list, save_folder)
 
     time_vec = time_first:time_last
 
-
-
-    @show time_first
-
-
-    @show time_last
-    
-
-
     # Read new meteorological data
 
     met_var = "tm"
 
-    tair_new, time_new = read_senorge_data(time_vec, met_var, elev_ind; scale_func = x -> (x-2732.0)/10.0)
+    tair_new, time_new = read_senorge_data(time_vec, met_var, df_geo; scale_func = x -> (x-2732.0)/10.0)
 
     met_var = "rr"
 
-    prec_new, time_new = read_senorge_data(time_vec, met_var, elev_ind; scale_func = x -> x/10.0)
+    prec_new, time_new = read_senorge_data(time_vec, met_var, df_geo; scale_func = x -> x/10.0)
 
     # Write data to files
 
-    write_update(stat_list, save_folder, "Tair", time_old, tair_old, time_new, tair_new, stat_dbk)
+    write_update(save_folder, "tair", time_old, tair_old, time_new, tair_new, df_meta)
 
-    write_update(stat_list, save_folder, "Prec", time_old, prec_old, time_new, prec_new, stat_dbk)
+    write_update(save_folder, "prec", time_old, prec_old, time_new, prec_new, df_meta)
 
     # Process runoff data
 
