@@ -423,10 +423,10 @@ function process_runoff_data(stat_list, time_vec, df_meta, path_runoff, save_fol
 
             runoff_save = (runoff_save * 86400 * 1000) / (area_total[istat] * 1e6)  # Convert from m3/s to mm/day
 
-            runoff_save[isna(runoff_save)] = -999.0
-            runoff_save[runoff_save .< 0.0] = -999.0
+            runoff_save[isna.(runoff_save)] = -999.0
+            #runoff_save[runoff_save .< 0.0] = -999.0
 
-            data = hcat(Dates.format(time_save, "yyyy-mm-dd HH:MM"), round(runoff_save, 2))
+            data = hcat(Dates.format(time_save, "yyyy-mm-dd HH:MM"), round.(runoff_save, 2))
 
             file_path = joinpath(save_folder, "$(replace(stat_name, ".", "_"))_data")
             file_name = joinpath(file_path, "runoff.txt")
