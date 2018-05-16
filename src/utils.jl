@@ -8,7 +8,7 @@ function read_metadata()
 
     file_name = joinpath(dirname(@__FILE__), "../raw/Serier til Avrenningskart 2016.xlsx")
 
-    df_meta = readxlsheet(DataFrame, file_name, "Ark1")
+    df_meta = DataFrame(load(file_name, "Ark1"))
 
     regine_area = convert(Array{Int64}, df_meta[:regine_area])
     main_no = convert(Array{Int64}, df_meta[:main_no])
@@ -407,11 +407,13 @@ function process_runoff_data(stat_list, time_vec, df_meta, path_runoff, save_fol
 
         # Match desired time period using data frames and joins
 
-        df_all = DataFrame(Time = map(DateTime, data[:,1]), Runoff = data[:,2])
+        df_runoff = DataFrame(Time = map(DateTime, data[:,1]), Runoff = data[:,2])
 
-        df_subset = DataFrame(Time = time_vec)
+        df_ref = DataFrame(Time = time_vec)
 
-        df_final = join(df_subset, df_all, on = :Time, kind = :left)
+        df_final = join(df_ref, df_runoff, on = :Time, kind = :left)
+
+	    sort!(df_final, [:Time])
 
         # Save data to file
 
@@ -423,7 +425,7 @@ function process_runoff_data(stat_list, time_vec, df_meta, path_runoff, save_fol
 
             runoff_save = (runoff_save * 86400 * 1000) / (area_total[istat] * 1e6)  # Convert from m3/s to mm/day
 
-            runoff_save[isna.(runoff_save)] = -999.0
+            runoff_save[ismissing.(runoff_save)] = -999.0
             #runoff_save[runoff_save .< 0.0] = -999.0
 
             data = hcat(Dates.format(time_save, "yyyy-mm-dd HH:MM"), round.(runoff_save, 2))
@@ -471,7 +473,7 @@ function read_old_data(save_folder, met_var; crop = 10)
         str  = readline(file_path)
         nsep = length(matchall(r";", str))
         tmp  = CSV.read(file_path, delim = ";", header = false,
-                        dateformat="yyyy-mm-dd HH:MM", nullable = false, types = vcat(DateTime, repmat([Float64], nsep)))
+                        dateformat="yyyy-mm-dd HH:MM", allowmissing=:none, types = vcat(DateTime, repmat([Float64], nsep)))
 
         time = Array(tmp[1:end-crop, 1])
         tmp  = Array(tmp[1:end-crop, 2:end])

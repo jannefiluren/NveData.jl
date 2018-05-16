@@ -1,7 +1,8 @@
 module NveData
 
 using DataStructures
-using ExcelReaders
+using ExcelFiles
+using FileIO
 using DataFrames
 using CSV
 using Query
