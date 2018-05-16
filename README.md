@@ -1,1 +1,3 @@
 # NveData
+
+Julia package for handling hydrological data at NVE. This package needs more documentation. However, see functions [init_dataset](https://github.com/jmgnve/NveData/blob/master/src/init_dataset.jl) and [update_dataset](https://github.com/jmgnve/NveData/blob/master/src/update_dataset.jl) to get an idea how the package works...
