@@ -6,12 +6,12 @@ Read metadata stored in excel sheet (Serier til Avrenningskart 2016.xlsx)
 """
 function read_metadata()
 
-    file_name = joinpath(dirname(@__FILE__), "../raw/Serier til Avrenningskart 2016.xlsx")
+    file_name = joinpath(dirname(@__FILE__), "../raw/metadata.csv")
 
-    df_meta = DataFrame(load(file_name, "Ark1"))
+    df_meta = CSV.read(file_name; delim = ';')
 
-    regine_area = convert(Array{Int64}, df_meta[:regine_area])
-    main_no = convert(Array{Int64}, df_meta[:main_no])
+    regine_area = df_meta[:regine_area]
+    main_no = df_meta[:main_no]
 
     df_meta[:regine_main] = ["$(regine_area[i]).$(main_no[i])" for i in eachindex(regine_area)]
 
@@ -27,11 +27,7 @@ Select metadata using station selection
 """
 function subset_metadata(df_meta, stat_list)
 
-    df_meta = @from i in df_meta begin
-        @where i.regine_main in stat_list
-        @select i
-        @collect DataFrame
-    end
+    df_meta = filter(row -> row[:regine_main] in stat_list, df_meta)
     
     return df_meta
 
@@ -52,7 +48,7 @@ function read_dbk_ind()
 
     dbk_ind = OrderedDict{Float64, Array{Int64, 1}}()
 
-    for line in lines
+    for line in lines        
         str_splitted = split(line)
         key = parse(Float64, str_splitted[2])
         values = map(x -> parse(Int64,x) + 1, str_splitted[3:end])
@@ -344,14 +340,19 @@ function metadata_elevbands(save_folder, df_geo, df_meta)
         
         df_agg = aggregate(df_tmp, :elev_ind, [mean, sum])
 
-        df_save = @from i in df_agg begin
+        #df_save = @from i in df_agg begin
 
-            @select {i.elev_ind, i.lus_unclassified_mean, i.lus_glacier_mean, i.lus_agriculture_mean, i.lus_bog_mean,
-            i.lus_lake_mean, i.lus_forest_mean, i.lus_bare_mountain_mean, i.lus_urban_mean, i.elevation_mean, i.area_sum}
-            @collect DataFrame
+        #    @select {i.elev_ind, i.lus_unclassified_mean, i.lus_glacier_mean, i.lus_agriculture_mean, i.lus_bog_mean,
+        #    i.lus_lake_mean, i.lus_forest_mean, i.lus_bare_mountain_mean, i.lus_urban_mean, i.elevation_mean, i.area_sum}
+        #    @collect DataFrame
 
-        end
+        #end
 
+        keep = [:elev_ind, :lus_unclassified_mean, :lus_glacier_mean, :lus_agriculture_mean, :lus_bog_mean,
+                :lus_lake_mean, :lus_forest_mean, :lus_bare_mountain_mean, :lus_urban_mean, :elevation_mean, :area_sum]
+
+        df_save = df_aff[keep]
+        
         # Save data to files
         
         irow = find(df_meta[:drainage_basin_key] .== dbk)
@@ -413,7 +414,7 @@ function process_runoff_data(stat_list, time_vec, df_meta, path_runoff, save_fol
 
         df_final = join(df_ref, df_runoff, on = :Time, kind = :left)
 
-	    sort!(df_final, [:Time])
+	sort!(df_final, [:Time])
 
         # Save data to file
 

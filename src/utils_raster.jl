@@ -59,7 +59,7 @@ function raster2vec(raster)
 
 data = raster["data"]
 data[data .== raster["NODATA_value"]] = NaN
-data = transpose(data)
+data = permutedims(data)
 vec = data[:]
 
 return vec

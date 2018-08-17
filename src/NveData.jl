@@ -1,11 +1,8 @@
 module NveData
 
 using DataStructures
-using ExcelFiles
-using FileIO
 using DataFrames
 using CSV
-using Query
 
 export watershed_info
 
