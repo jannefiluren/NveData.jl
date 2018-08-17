@@ -3,6 +3,9 @@ module NveData
 using DataStructures
 using DataFrames
 using CSV
+using Dates
+using DelimitedFiles
+using Statistics
 
 export watershed_info
 

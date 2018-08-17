@@ -58,7 +58,7 @@ Convert a esri raster to a vector and replace missing data with not-a-number.
 function raster2vec(raster)
 
 data = raster["data"]
-data[data .== raster["NODATA_value"]] = NaN
+data[data .== raster["NODATA_value"]] .= NaN
 data = permutedims(data)
 vec = data[:]
 

@@ -32,7 +32,7 @@ function init_dataset(stat_list, time_vec, save_folder;
 
     met_var = "tm"
 
-    tair_data, tair_time = read_senorge_data(time_vec, met_var, df_geo; scale_func = x -> (x-2732.0)/10.0)
+    tair_data, tair_time = read_senorge_data(time_vec, met_var, df_geo; scale_func = x -> (x .- 2732.0)./10.0)
 
     met_var = "rr"
 

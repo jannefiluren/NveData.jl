@@ -41,11 +41,11 @@ function update_dataset(stat_list, save_folder;
 
     met_var = "tm"
 
-    tair_new, time_new = read_senorge_data(time_vec, met_var, df_geo; scale_func = x -> (x-2732.0)/10.0)
+    tair_new, time_new = read_senorge_data(time_vec, met_var, df_geo; scale_func = x -> (x.-2732.0)./10.0)
 
     met_var = "rr"
 
-    prec_new, time_new = read_senorge_data(time_vec, met_var, df_geo; scale_func = x -> x/10.0)
+    prec_new, time_new = read_senorge_data(time_vec, met_var, df_geo; scale_func = x -> x./10.0)
 
     # Write data to files
 

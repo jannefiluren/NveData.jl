@@ -4,6 +4,7 @@
 
 using NveData
 using DataFrames
+using Dates
 
 stat_list = ["2.11","2.28","2.32","2.142","2.145","2.265","2.268","2.279","2.291","2.323","2.439","2.463","2.479",
             "2.604","2.614","2.633","2.634","3.22","6.10","6.71","8.2","8.6","12.70","12.97","12.114","12.150","12.171",
@@ -18,9 +19,9 @@ stat_list = ["2.11","2.28","2.32","2.142","2.145","2.265","2.268","2.279","2.291
             162.3","163.5","165.6","168.2","173.8","174.3","174.11","177.4","191.2","196.35","200.4","203.2","206.3",
             "208.3","212.10","212.27","212.49","223.2","230.1","234.13","234.18","247.3","311.6","311.460","313.10"]
 
-time_vec = floor(now()-Dates.Day(10), Dates.Day):floor(now(), Dates.Day)
+time_vec = floor(now()-Day(10), Day):Day(1):floor(now(), Day)
 
-save_folder = "C:/Users/jmg/Desktop/TEST_DATA"
+save_folder = "/home/jmg/temp"
 
 init_dataset(stat_list, time_vec, save_folder)
 
@@ -29,11 +30,11 @@ init_dataset(stat_list, time_vec, save_folder)
 using NveData
 using DataFrames
 
-save_folder = "C:/Users/jmg/Desktop/TEST_DATA"
+save_folder = "/home/jmg/temp"
 
 stat_list = readdir(save_folder)
-stat_list = [replace(x, "_data", "") for x in stat_list]
-stat_list = [replace(x, "_", ".") for x in stat_list]
+stat_list = [replace(x, "_data" => "") for x in stat_list]
+stat_list = [replace(x, "_" => ".") for x in stat_list]
 
 update_dataset(stat_list, save_folder)
 

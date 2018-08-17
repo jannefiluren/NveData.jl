@@ -8,7 +8,9 @@ function read_metadata()
 
     file_name = joinpath(dirname(@__FILE__), "../raw/metadata.csv")
 
-    df_meta = CSV.read(file_name; delim = ';')
+    df_meta = CSV.read(file_name; delim = ';', missingstring = "NULL")
+
+    filter!(row -> !ismissing(row[:drainage_basin_key]), df_meta)
 
     regine_area = df_meta[:regine_area]
     main_no = df_meta[:main_no]
@@ -103,8 +105,8 @@ function watershed_info(dbk_ind, elev_breaks = 0:200:4000)
     "lus_lake", "lus_forest", "lus_bare_mountain", "lus_urban", "elevation"]
 
     for raster in raster_names
-        
-        file_name = joinpath(Pkg.dir("NveData"), "raw/$(raster).asc")
+
+        file_name = joinpath(dirname(@__FILE__), "../raw/$(raster).asc")
         
         data_raster = read_esri_raster(file_name)
         
@@ -112,7 +114,7 @@ function watershed_info(dbk_ind, elev_breaks = 0:200:4000)
 
         for (dbk, senorge_ind) in dbk_ind
 
-            df_all[dbk][parse(raster)] = data_vec[senorge_ind]
+            df_all[dbk][Meta.parse(raster)] = data_vec[senorge_ind]
 
         end
 
@@ -141,10 +143,10 @@ function watershed_info(dbk_ind, elev_breaks = 0:200:4000)
         
         for ielev in 1:length(elev_breaks)-1
             
-            ind = find(elev_breaks[ielev] .<= elevation .< elev_breaks[ielev+1])
+            ind = findall(elev_breaks[ielev] .<= elevation .< elev_breaks[ielev+1])
             
             if !isempty(ind)
-                elev_ind[ind] = elev_band
+                elev_ind[ind] .= elev_band
                 elev_band += 1
             end
             
@@ -262,12 +264,12 @@ function write_met_data(save_folder, file_desc, time_vec, met_data, df_meta)
 
             regine_main = row[:regine_main]
 
-            file_path = joinpath(save_folder, "$(replace(regine_main, ".", "_"))_data")
+            file_path = joinpath(save_folder, "$(replace(regine_main, "." => "_"))_data")
 
             mkpath(file_path)
 
             file_name = joinpath(file_path, "$file_desc.txt")
-            data = hcat(Dates.format(time_vec, "yyyy-mm-dd HH:MM"), round.(met_data[dbk], 2))
+            data = hcat(Dates.format.(time_vec, "yyyy-mm-dd HH:MM"), round.(met_data[dbk], digits = 2))
 
             f = open(file_name, "w")
             writedlm(f, data, ";", quotes=false)
@@ -299,7 +301,7 @@ function write_update(save_folder, file_desc, time_old, met_old, time_new, met_n
 
             dbk = row[:drainage_basin_key]
 
-            file_path = joinpath(save_folder, "$(replace(regine_main, ".", "_"))_data")
+            file_path = joinpath(save_folder, "$(replace(regine_main, "." => "_"))_data")
 
             mkpath(file_path)
 
@@ -340,6 +342,10 @@ function metadata_elevbands(save_folder, df_geo, df_meta)
         
         df_agg = aggregate(df_tmp, :elev_ind, [mean, sum])
 
+        colnames = [Symbol(replace(string(name), "Statistics." => "")) for name in names(df_agg)]
+
+        names!(df_agg, colnames)
+        
         #df_save = @from i in df_agg begin
 
         #    @select {i.elev_ind, i.lus_unclassified_mean, i.lus_glacier_mean, i.lus_agriculture_mean, i.lus_bog_mean,
@@ -347,25 +353,26 @@ function metadata_elevbands(save_folder, df_geo, df_meta)
         #    @collect DataFrame
 
         #end
+        
+        keep = [:elev_ind, :lus_unclassified_mean, :lus_glacier_mean, :lus_agriculture_mean,
+                :lus_bog_mean, :lus_lake_mean, :lus_forest_mean, :lus_bare_mountain_mean,
+                :lus_urban_mean, :elevation_mean, :area_sum]
 
-        keep = [:elev_ind, :lus_unclassified_mean, :lus_glacier_mean, :lus_agriculture_mean, :lus_bog_mean,
-                :lus_lake_mean, :lus_forest_mean, :lus_bare_mountain_mean, :lus_urban_mean, :elevation_mean, :area_sum]
-
-        df_save = df_aff[keep]
+        df_save = df_agg[keep]
         
         # Save data to files
         
-        irow = find(df_meta[:drainage_basin_key] .== dbk)
+        irow = findall(df_meta[:drainage_basin_key] .== dbk)
         
         regine_main = df_meta[:regine_main][irow][1]
 
-        file_path = joinpath(save_folder, "$(replace(regine_main, ".", "_"))_data")
+        file_path = joinpath(save_folder, "$(replace(regine_main, "." => "_"))_data")
 
         mkpath(file_path)
         
         file_name = joinpath(file_path, "metadata.txt")
                     
-        writetable(file_name, df_save, separator = ';')
+        CSV.write(file_name, df_save; delim = ';')
 
     end
 
@@ -399,7 +406,7 @@ function process_runoff_data(stat_list, time_vec, df_meta, path_runoff, save_fol
 
         # Load data for one station
 
-        istat = find(stat_all .== stat_name)
+        istat = findall(stat_all .== stat_name)
         istat = istat[1]
 
         file_name = "$(regine_area[istat]).$(main_no[istat]).$(point_no[istat]).$(param_key[istat]).$(version_no_end[istat])"
@@ -431,7 +438,7 @@ function process_runoff_data(stat_list, time_vec, df_meta, path_runoff, save_fol
 
             data = hcat(Dates.format(time_save, "yyyy-mm-dd HH:MM"), round.(runoff_save, 2))
 
-            file_path = joinpath(save_folder, "$(replace(stat_name, ".", "_"))_data")
+            file_path = joinpath(save_folder, "$(replace(stat_name, "." => "_"))_data")
             file_name = joinpath(file_path, "runoff.txt")
 
             mkpath(file_path)
@@ -442,7 +449,7 @@ function process_runoff_data(stat_list, time_vec, df_meta, path_runoff, save_fol
             
         catch
 
-            warn("Unable to write runoff data for station $stat_name")
+            @warn "Unable to write runoff data for station $stat_name"
 
         end
 
@@ -459,8 +466,8 @@ Read existing data.
 function read_old_data(save_folder, met_var; crop = 10)
 
     stat_list = readdir(save_folder)
-    stat_list = [replace(x, "_data", "") for x in stat_list]
-    stat_list = [replace(x, "_", ".") for x in stat_list]
+    stat_list = [replace(x, "_data" => "") for x in stat_list]
+    stat_list = [replace(x, "_" => ".") for x in stat_list]
 
 
     data = OrderedDict()
@@ -469,12 +476,12 @@ function read_old_data(save_folder, met_var; crop = 10)
 
     for stat_name in stat_list
 
-        file_path = joinpath(save_folder, "$(replace(stat_name, ".", "_"))_data", "$met_var.txt")
-
+        file_path = joinpath(save_folder, "$(replace(stat_name, "." => "_"))_data", "$met_var.txt")
+        
         str  = readline(file_path)
-        nsep = length(matchall(r";", str))
+        nsep = length(collect((m.match for m = eachmatch(r";", str, overlap=overlap))))
         tmp  = CSV.read(file_path, delim = ";", header = false,
-                        dateformat="yyyy-mm-dd HH:MM", allowmissing=:none, types = vcat(DateTime, repmat([Float64], nsep)))
+                        dateformat="yyyy-mm-dd HH:MM", allowmissing=:none, types = vcat(DateTime, repeat([Float64], nsep)))
 
         time = Array(tmp[1:end-crop, 1])
         tmp  = Array(tmp[1:end-crop, 2:end])
