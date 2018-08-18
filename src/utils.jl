@@ -346,14 +346,6 @@ function metadata_elevbands(save_folder, df_geo, df_meta)
 
         names!(df_agg, colnames)
         
-        #df_save = @from i in df_agg begin
-
-        #    @select {i.elev_ind, i.lus_unclassified_mean, i.lus_glacier_mean, i.lus_agriculture_mean, i.lus_bog_mean,
-        #    i.lus_lake_mean, i.lus_forest_mean, i.lus_bare_mountain_mean, i.lus_urban_mean, i.elevation_mean, i.area_sum}
-        #    @collect DataFrame
-
-        #end
-        
         keep = [:elev_ind, :lus_unclassified_mean, :lus_glacier_mean, :lus_agriculture_mean,
                 :lus_bog_mean, :lus_lake_mean, :lus_forest_mean, :lus_bare_mountain_mean,
                 :lus_urban_mean, :elevation_mean, :area_sum]
@@ -404,6 +396,8 @@ function process_runoff_data(stat_list, time_vec, df_meta, path_runoff, save_fol
 
     for stat_name in stat_list
 
+        @info "Save runoff data for station: $(stat_name)"
+
         # Load data for one station
 
         istat = findall(stat_all .== stat_name)
@@ -421,7 +415,7 @@ function process_runoff_data(stat_list, time_vec, df_meta, path_runoff, save_fol
 
         df_final = join(df_ref, df_runoff, on = :Time, kind = :left)
 
-	sort!(df_final, [:Time])
+	    sort!(df_final, [:Time])
 
         # Save data to file
 
@@ -431,12 +425,15 @@ function process_runoff_data(stat_list, time_vec, df_meta, path_runoff, save_fol
 
             runoff_save = df_final[:Runoff]
 
-            runoff_save = (runoff_save * 86400 * 1000) / (area_total[istat] * 1e6)  # Convert from m3/s to mm/day
+            area = tryparse(Float64, replace(area_total[istat], "," => "."))
 
-            runoff_save[ismissing.(runoff_save)] = -999.0
-            #runoff_save[runoff_save .< 0.0] = -999.0
+            runoff_save = (runoff_save * 86400 * 1000) / (area * 1e6)  # Convert from m3/s to mm/day
 
-            data = hcat(Dates.format(time_save, "yyyy-mm-dd HH:MM"), round.(runoff_save, 2))
+            runoff_save = convert(Array{Union{Missing, Float64}, 1}, runoff_save)
+
+            runoff_save[ismissing.(runoff_save)] .= -999.0
+            
+            data = hcat(Dates.format.(time_save, "yyyy-mm-dd HH:MM"), round.(runoff_save; digits = 2))
 
             file_path = joinpath(save_folder, "$(replace(stat_name, "." => "_"))_data")
             file_name = joinpath(file_path, "runoff.txt")
@@ -469,7 +466,6 @@ function read_old_data(save_folder, met_var; crop = 10)
     stat_list = [replace(x, "_data" => "") for x in stat_list]
     stat_list = [replace(x, "_" => ".") for x in stat_list]
 
-
     data = OrderedDict()
     
     time = []
@@ -479,12 +475,13 @@ function read_old_data(save_folder, met_var; crop = 10)
         file_path = joinpath(save_folder, "$(replace(stat_name, "." => "_"))_data", "$met_var.txt")
         
         str  = readline(file_path)
-        nsep = length(collect((m.match for m = eachmatch(r";", str, overlap=overlap))))
+        nsep = length(collect((m.match for m = eachmatch(r";", str))))
         tmp  = CSV.read(file_path, delim = ";", header = false,
-                        dateformat="yyyy-mm-dd HH:MM", allowmissing=:none, types = vcat(DateTime, repeat([Float64], nsep)))
+                        dateformat="yyyy-mm-dd HH:MM", allowmissing=:none, 
+                        types = vcat(DateTime, repeat([Float64], nsep)))
 
-        time = Array(tmp[1:end-crop, 1])
-        tmp  = Array(tmp[1:end-crop, 2:end])
+        time = tmp[1:end-crop, 1]
+        tmp  = convert(Array{Float64}, tmp[1:end-crop, 2:end])
 
         data[stat_name] = tmp
 
