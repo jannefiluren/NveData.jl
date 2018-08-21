@@ -297,6 +297,8 @@ function write_update(save_folder, file_desc, time_old, met_old, time_new, met_n
 
         try
 
+            @info "Write station $(row[:station_name])"
+
             regine_main = row[:regine_main]
 
             dbk = row[:drainage_basin_key]
@@ -309,7 +311,7 @@ function write_update(save_folder, file_desc, time_old, met_old, time_new, met_n
             time_vec = vcat(time_old, time_new)
 
             file_name = joinpath(file_path, "$file_desc.txt")
-            data = hcat(Dates.format(time_vec, "yyyy-mm-dd HH:MM"), round.(met_data, 2))
+            data = hcat(Dates.format.(time_vec, "yyyy-mm-dd HH:MM"), round.(met_data, digits = 2))
 
             f = open(file_name, "w")
             writedlm(f, data, ";", quotes=false)
@@ -317,7 +319,7 @@ function write_update(save_folder, file_desc, time_old, met_old, time_new, met_n
 
         catch
 
-            warn("Unable to write $file_desc data for station $regine_main")
+            @warn "Unable to write $file_desc data for station $regine_main"
 
         end
 
@@ -504,7 +506,7 @@ function find_last_senorge(senorge_version)
 
     time_final = []
 
-    for time_check = time_start:time_stop
+    for time_check = time_start:Day(1):time_stop
 
         date_str1 = Dates.format(time_check, "yyyy")
         date_str2 = Dates.format(time_check, "yyyy_mm_dd")

@@ -9,11 +9,15 @@ function update_dataset(stat_list, save_folder;
 
     # Read metadata from excel sheet
 
+    @info "Read metadata"
+
     df_meta = read_metadata()
 
     df_meta = subset_metadata(df_meta, stat_list)
 
     # Dictonary that links drainage basin keys to senorge indices
+
+    @info "Link drainage basin keys to senorge indices"
 
     dbk_ind = read_dbk_ind()
 
@@ -22,9 +26,13 @@ function update_dataset(stat_list, save_folder;
     # Dictonary that links drainage basin keys to dataframes with
     # geographic information (landuse, elevation...)
 
+    @info "Link drainage basin keys to dataframes with geoinfo"
+
     df_geo = watershed_info(dbk_ind)
 
     # Read existing data
+
+    @info "Read existing data"
 
     tair_old, time_old = read_old_data(save_folder, "tair")
 
@@ -35,7 +43,7 @@ function update_dataset(stat_list, save_folder;
     time_first = time_old[end] + Dates.Day(1)
     time_last = find_last_senorge("V2.0")
 
-    time_vec = time_first:time_last
+    time_vec = time_first:Day(1):time_last
 
     # Read new meteorological data
 
